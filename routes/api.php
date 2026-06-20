@@ -2,6 +2,7 @@
 
 use App\Modules\Auth\Controllers\AuthController;
 use App\Modules\Customers\Controllers\CustomerController;
+use App\Modules\Vehicles\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,9 +51,20 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
     });
 
-    // ── Phase 3: Assets / Fleet ───────────────────────────────────────────────
-    // Route::apiResource('assets', AssetController::class);
-    // Route::get('assets/availability', [AssetController::class, 'availability']);
+    // ── Phase 4: Assets / Fleet ───────────────────────────────────────────────
+    Route::middleware('check.permission:vehicles.view')->group(function () {
+        Route::get('/vehicles', [VehicleController::class, 'index']);
+        Route::get('/vehicles/{id}', [VehicleController::class, 'show']);
+    });
+    Route::middleware('check.permission:vehicles.create')->group(function () {
+        Route::post('/vehicles', [VehicleController::class, 'store']);
+    });
+    Route::middleware('check.permission:vehicles.update')->group(function () {
+        Route::put('/vehicles/{id}', [VehicleController::class, 'update']);
+    });
+    Route::middleware('check.permission:vehicles.delete')->group(function () {
+        Route::delete('/vehicles/{id}', [VehicleController::class, 'destroy']);
+    });
 
     // ── Phase 4: Reservations ─────────────────────────────────────────────────
     // Route::apiResource('reservations', ReservationController::class);
