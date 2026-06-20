@@ -1,59 +1,210 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚗 Rental SaaS — Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A multi-tenant car rental SaaS REST API built with **Laravel 12** and **JWT Authentication**. Supports multiple tenants, branches, roles & permissions, customers, fleet assets, reservations, rentals, and invoicing.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Dependency | Version |
+|---|---|
+| PHP | `^8.2` |
+| Composer | `^2.x` |
+| MySQL | `^8.0` (or MariaDB `^10.6`) |
+| Laravel | `^12.0` |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+> **Recommended local stack:** [XAMPP](https://www.apachefriends.org/) with PHP 8.2+ and MySQL 8.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## ⚙️ Tech Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Framework:** Laravel 12
+- **Auth:** JWT via `php-open-source-saver/jwt-auth`
+- **Database:** MySQL (multi-tenant schema, single DB)
+- **Architecture:** RESTful API — all responses are JSON
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🚀 Installation & Setup
 
-### Premium Partners
+### 1. Clone the repository
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+git clone <repo-url>
+cd rental-saas-api
+```
 
-## Contributing
+### 2. Install PHP dependencies
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer install
+```
 
-## Code of Conduct
+### 3. Copy environment file
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.example .env
+```
 
-## Security Vulnerabilities
+### 4. Configure your `.env`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Open `.env` and update the following:
 
-## License
+```dotenv
+APP_NAME="Rental SaaS API"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=rental_saas
+DB_USERNAME=root
+DB_PASSWORD=          # leave empty for XAMPP default
+
+JWT_SECRET=           # generated in next step
+JWT_ALGO=HS256
+```
+
+### 5. Generate app key & JWT secret
+
+```bash
+php artisan key:generate
+php artisan jwt:secret
+```
+
+### 6. Create the database
+
+Open **phpMyAdmin** (or MySQL CLI) and create a database named:
+
+```
+rental_saas
+```
+
+### 7. Run migrations
+
+```bash
+php artisan migrate
+```
+
+### 8. Seed the database
+
+This seeds countries, currencies, timezones, subscription plans, a demo tenant, branches, roles, permissions, and test users.
+
+```bash
+php artisan db:seed
+```
+
+### 9. Start the development server
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+The API will be available at: **`http://127.0.0.1:8000/api/v1`**
+
+---
+
+## 🔑 Login Credentials
+
+After seeding, the following accounts are ready to use:
+
+### Super Admin _(all permissions)_
+
+| Field    | Value                   |
+|----------|-------------------------|
+| Email    | `admin@acmerental.com`  |
+| Password | `password`              |
+| Role     | Super Admin             |
+| Tenant   | Acme Rent-A-Car         |
+
+### Agent _(limited operational permissions)_
+
+| Field    | Value                   |
+|----------|-------------------------|
+| Email    | `agent@acmerental.com`  |
+| Password | `password`              |
+| Role     | Agent                   |
+| Tenant   | Acme Rent-A-Car         |
+
+> The **Agent** role can: view/create/update customers, view assets, manage reservations and rentals. It cannot access finance or user management.
+
+---
+
+## 📡 API Base URL
+
+```
+http://127.0.0.1:8000/api/v1
+```
+
+### Key Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/auth/login` | Login and receive JWT token |
+| `GET`  | `/auth/me` | Get authenticated user |
+| `POST` | `/auth/logout` | Logout |
+| `GET`  | `/customers` | List all customers |
+| `GET`  | `/assets` | List fleet assets |
+| `GET`  | `/reservations` | List reservations |
+| `GET`  | `/rentals` | List rentals |
+| `GET`  | `/finance/invoices` | List invoices |
+| `GET`  | `/users` | List users (Admin only) |
+
+All protected routes require the header:
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+---
+
+## 🗂️ Project Structure
+
+```
+rental-saas-api/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/     # API Controllers
+│   │   └── Middleware/      # Auth & Permission middleware
+│   └── Models/              # Eloquent models
+├── bootstrap/
+│   └── app.php              # Middleware alias registration
+├── database/
+│   ├── migrations/          # All DB migrations
+│   └── seeders/             # Seed data (credentials, roles, permissions)
+├── routes/
+│   └── api.php              # All API routes
+└── .env                     # Environment configuration
+```
+
+---
+
+## 🔧 Useful Artisan Commands
+
+```bash
+# Re-run all migrations fresh + reseed
+php artisan migrate:fresh --seed
+
+# List all registered routes
+php artisan route:list
+
+# Clear all caches
+php artisan optimize:clear
+
+# Run the server (XAMPP PHP)
+D:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
+```
+
+---
+
+## 🗄️ Database Configuration (Local / XAMPP)
+
+| Setting  | Value         |
+|----------|---------------|
+| Host     | `127.0.0.1`   |
+| Port     | `3306`        |
+| Database | `rental_saas` |
+| Username | `root`        |
+| Password | _(empty)_     |
