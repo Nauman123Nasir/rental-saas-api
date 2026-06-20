@@ -6,31 +6,38 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Vehicle extends Model
+class Asset extends Model
 {
     use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
         'branch_id',
-        'make',
+        'category_id',
+        'asset_code',
+        'name',
+        'brand',
         'model',
         'year',
-        'license_plate',
-        'vin',
-        'color',
-        'category',
+        'vin_number',
+        'serial_number',
         'status',
-        'mileage',
+        'ownership_type',
+        'current_mileage',
+        'current_hours',
+        'fuel_type',
+        'transmission',
         'daily_rate',
         'weekly_rate',
         'monthly_rate',
         'hourly_rate',
+        'currency_id',
     ];
 
     protected $casts = [
         'year' => 'integer',
-        'mileage' => 'integer',
+        'current_mileage' => 'integer',
+        'current_hours' => 'decimal:2',
         'daily_rate' => 'decimal:2',
         'weekly_rate' => 'decimal:2',
         'monthly_rate' => 'decimal:2',
@@ -47,8 +54,19 @@ class Vehicle extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function maintenanceLogs()
+    public function category()
     {
-        return $this->hasMany(MaintenanceLog::class);
+        return $this->belongsTo(AssetCategory::class, 'category_id');
+    }
+
+    public function blocks()
+    {
+        return $this->hasMany(AssetBlock::class);
+    }
+
+    // Convenience relation for only maintenance blocks
+    public function maintenanceBlocks()
+    {
+        return $this->hasMany(AssetBlock::class)->where('block_type', 'Maintenance');
     }
 }

@@ -52,18 +52,21 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // ── Phase 4: Assets / Fleet ───────────────────────────────────────────────
-    Route::middleware('check.permission:vehicles.view')->group(function () {
-        Route::get('/vehicles', [VehicleController::class, 'index']);
-        Route::get('/vehicles/{id}', [VehicleController::class, 'show']);
+    // Assets
+    // Assets
+    Route::middleware('check.permission:assets.view')->group(function () {
+        Route::get('/assets', [App\Modules\Assets\Controllers\AssetController::class, 'index']);
+        Route::get('/assets/{asset}', [App\Modules\Assets\Controllers\AssetController::class, 'show']);
+        Route::get('/asset-categories', [App\Modules\Assets\Controllers\AssetCategoryController::class, 'index']);
     });
-    Route::middleware('check.permission:vehicles.create')->group(function () {
-        Route::post('/vehicles', [VehicleController::class, 'store']);
+    Route::middleware('check.permission:assets.create')->group(function () {
+        Route::post('/assets', [App\Modules\Assets\Controllers\AssetController::class, 'store']);
     });
-    Route::middleware('check.permission:vehicles.update')->group(function () {
-        Route::put('/vehicles/{id}', [VehicleController::class, 'update']);
+    Route::middleware('check.permission:assets.update')->group(function () {
+        Route::put('/assets/{asset}', [App\Modules\Assets\Controllers\AssetController::class, 'update']);
     });
-    Route::middleware('check.permission:vehicles.delete')->group(function () {
-        Route::delete('/vehicles/{id}', [VehicleController::class, 'destroy']);
+    Route::middleware('check.permission:assets.delete')->group(function () {
+        Route::delete('/assets/{asset}', [App\Modules\Assets\Controllers\AssetController::class, 'destroy']);
     });
 
     // ── Phase 4: Reservations ─────────────────────────────────────────────────

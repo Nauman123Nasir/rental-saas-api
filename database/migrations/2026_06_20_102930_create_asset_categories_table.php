@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('maintenance_logs', function (Blueprint $table) {
+        Schema::create('asset_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
-            $table->date('date');
-            $table->string('description');
-            $table->decimal('cost', 10, 2)->default(0);
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
             $table->timestamps();
+            
+            $table->unique(['tenant_id', 'name']);
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('maintenance_logs');
+        Schema::dropIfExists('asset_categories');
     }
 };
