@@ -2,24 +2,24 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     * Run in dependency order — globalization tables first.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            // ── Globalization (no dependencies) ───────────────────────────
+            CountrySeeder::class,
+            CurrencySeeder::class,
+            TimezoneSeeder::class,
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            // ── Business Reference Data ───────────────────────────────────
+            SubscriptionPlanSeeder::class,
         ]);
     }
 }

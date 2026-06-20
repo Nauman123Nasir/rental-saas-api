@@ -13,12 +13,18 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            // Multi-tenant identity
+            $table->unsignedBigInteger('tenant_id')->nullable()->index();
+            $table->unsignedBigInteger('branch_id')->nullable()->index();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
+            // FK constraints added after tenants/branches tables are created
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
