@@ -69,11 +69,57 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/assets/{asset}', [App\Modules\Assets\Controllers\AssetController::class, 'destroy']);
     });
 
-    // ── Phase 4: Reservations ─────────────────────────────────────────────────
-    // Route::apiResource('reservations', ReservationController::class);
+    // ── Phase 5: Reservations ─────────────────────────────────────────────────
+    Route::middleware('check.permission:reservations.view')->group(function () {
+        Route::get('/reservations', [App\Http\Controllers\Api\V1\ReservationController::class, 'index']);
+        Route::get('/reservations/{id}', [App\Http\Controllers\Api\V1\ReservationController::class, 'show']);
+    });
+    Route::middleware('check.permission:reservations.create')->group(function () {
+        Route::post('/reservations', [App\Http\Controllers\Api\V1\ReservationController::class, 'store']);
+    });
+    Route::middleware('check.permission:reservations.update')->group(function () {
+        Route::put('/reservations/{id}', [App\Http\Controllers\Api\V1\ReservationController::class, 'update']);
+    });
+    Route::middleware('check.permission:reservations.delete')->group(function () {
+        Route::delete('/reservations/{id}', [App\Http\Controllers\Api\V1\ReservationController::class, 'destroy']);
+    });
 
-    // ── Phase 5: Rentals / Operations ─────────────────────────────────────────
-    // Route::post('rentals/checkout', [RentalController::class, 'checkout']);
-    // Route::post('rentals/checkin',  [RentalController::class, 'checkin']);
+    // ── Phase 6: Rentals / Operations ─────────────────────────────────────────
+    Route::middleware('check.permission:rentals.view')->group(function () {
+        Route::get('/rentals', [App\Http\Controllers\Api\V1\RentalController::class, 'index']);
+        Route::get('/rentals/{id}', [App\Http\Controllers\Api\V1\RentalController::class, 'show']);
+    });
+    Route::middleware('check.permission:rentals.create')->group(function () {
+        Route::post('/rentals/checkout', [App\Http\Controllers\Api\V1\RentalController::class, 'checkout']);
+    });
+    Route::middleware('check.permission:rentals.update')->group(function () {
+        Route::post('/rentals/{id}/checkin', [App\Http\Controllers\Api\V1\RentalController::class, 'checkin']);
+    });
+
+    // ── Phase 7: Finance (Invoices & Payments) ─────────────────────────────────
+    Route::prefix('finance')->group(function () {
+
+        // Invoices
+        Route::middleware('check.permission:finance.view')->group(function () {
+            Route::get('/invoices',       [App\Modules\Finance\Controllers\InvoiceController::class, 'index']);
+            Route::get('/invoices/{id}',  [App\Modules\Finance\Controllers\InvoiceController::class, 'show']);
+        });
+        Route::middleware('check.permission:finance.create')->group(function () {
+            Route::post('/invoices/generate', [App\Modules\Finance\Controllers\InvoiceController::class, 'generate']);
+        });
+        Route::middleware('check.permission:finance.update')->group(function () {
+            Route::patch('/invoices/{id}/void', [App\Modules\Finance\Controllers\InvoiceController::class, 'void']);
+        });
+
+        // Payments
+        Route::middleware('check.permission:finance.view')->group(function () {
+            Route::get('/payments',      [App\Modules\Finance\Controllers\PaymentController::class, 'index']);
+            Route::get('/payments/{id}', [App\Modules\Finance\Controllers\PaymentController::class, 'show']);
+        });
+        Route::middleware('check.permission:finance.create')->group(function () {
+            Route::post('/payments', [App\Modules\Finance\Controllers\PaymentController::class, 'store']);
+        });
+    });
 
 });
+

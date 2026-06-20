@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Reservation;
+use App\Models\AssetBlock;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class ReservationController extends Controller
+{
+    public function index()
+    {
+        $reservations = Reservation::with(['assets', 'customer'])->get();
+        return response()->json($reservations);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'assets' => 'required|array',
+            'assets.*' => 'exists:assets,id',
+            'pickup_datetime_utc' => 'required|date',
+            'return_datetime_utc' => 'required|date|after:pickup_datetime_utc',
+        ]);
+
+        $pickup = Carbon::parse($request->pickup_datetime_utc);
+        $return = Carbon::parse($request->return_datetime_utc);
+
+        // Check availability
+        foreach ($request->assets as $assetId) {
+            $conflicts = AssetBlock::where('asset_id', $assetId)
+                ->where(function ($query) use ($pickup, $return) {
+                    $query->whereBetween('start_time_utc', [$pickup, $return])
+                          ->orWhereBetween('end_time_utc', [$pickup, $return])
+                          ->orWhere(function ($q) use ($pickup, $return) {
+                              $q->where('start_time_utc', '<=', $pickup)
+                                ->where('end_time_utc', '>=', $return);
+                          });
+                })->exists();
+
+            if ($conflicts) {
+                return response()->json(['message' => 'Asset ' . $assetId . ' is not available for the selected dates.'], 422);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $reservation = Reservation::create([
+                'reservation_no' => 'RES-' . strtoupper(uniqid()),
+                'customer_id' => $request->customer_id,
+                'status' => 'Pending',
+                'pickup_datetime_utc' => $pickup,
+                'return_datetime_utc' => $return,
+                'tenant_id' => auth()->user()->tenant_id ?? 1, // fallback for now
+            ]);
+
+            foreach ($request->assets as $assetId) {
+                $reservation->assets()->create(['asset_id' => $assetId]);
+
+                AssetBlock::create([
+                    'asset_id' => $assetId,
+                    'block_type' => 'Reservation',
+                    'start_time_utc' => $pickup,
+                    'end_time_utc' => $return,
+                    'notes' => 'Blocked for Reservation: ' . $reservation->reservation_no,
+                    'tenant_id' => $reservation->tenant_id,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json($reservation->load('assets'), 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error creating reservation', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function show(string $id)
+    {
+        $reservation = Reservation::with(['assets', 'customer'])->findOrFail($id);
+        return response()->json($reservation);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        // Add logic as needed
+        return response()->json(['message' => 'Not implemented yet']);
+    }
+
+    public function destroy(string $id)
+    {
+        // Add logic as needed
+        return response()->json(['message' => 'Not implemented yet']);
+    }
+}
