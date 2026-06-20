@@ -32,6 +32,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/me',       [AuthController::class, 'me']);
     });
 
+    // ── Phase 8: Operational Dashboard ────────────────────────────────────────
+    Route::get('/dashboard/stats', [App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
+
     // ── Phase 1: Tenants & Organisation ──────────────────────────────────────
     // (Placeholder – controllers to be added in Phase 1)
     // Route::apiResource('branches', BranchController::class);
