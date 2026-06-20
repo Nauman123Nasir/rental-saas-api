@@ -21,3 +21,4 @@ class ReservationDeposit extends Model
         return $this->belongsTo(Reservation::class);
     }
 }
+

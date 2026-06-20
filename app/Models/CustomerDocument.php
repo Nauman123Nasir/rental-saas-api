@@ -30,3 +30,4 @@ class CustomerDocument extends Model
         return $this->belongsTo(Customer::class);
     }
 }
+

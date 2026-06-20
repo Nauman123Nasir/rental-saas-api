@@ -34,11 +34,11 @@ class ReservationController extends Controller
         foreach ($request->assets as $assetId) {
             $conflicts = AssetBlock::where('asset_id', $assetId)
                 ->where(function ($query) use ($pickup, $return) {
-                    $query->whereBetween('start_time_utc', [$pickup, $return])
-                          ->orWhereBetween('end_time_utc', [$pickup, $return])
+                    $query->whereBetween('start_datetime', [$pickup, $return])
+                          ->orWhereBetween('end_datetime', [$pickup, $return])
                           ->orWhere(function ($q) use ($pickup, $return) {
-                              $q->where('start_time_utc', '<=', $pickup)
-                                ->where('end_time_utc', '>=', $return);
+                              $q->where('start_datetime', '<=', $pickup)
+                                ->where('end_datetime', '>=', $return);
                           });
                 })->exists();
 
@@ -64,9 +64,9 @@ class ReservationController extends Controller
                 AssetBlock::create([
                     'asset_id' => $assetId,
                     'block_type' => 'Reservation',
-                    'start_time_utc' => $pickup,
-                    'end_time_utc' => $return,
-                    'notes' => 'Blocked for Reservation: ' . $reservation->reservation_no,
+                    'start_datetime' => $pickup,
+                    'end_datetime' => $return,
+                    'reason' => 'Blocked for Reservation: ' . $reservation->reservation_no,
                     'tenant_id' => $reservation->tenant_id,
                 ]);
             }

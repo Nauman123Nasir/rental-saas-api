@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RentalReturnInspection extends Model
 {
@@ -19,3 +20,4 @@ class RentalReturnInspection extends Model
         return $this->belongsTo(Rental::class);
     }
 }
+

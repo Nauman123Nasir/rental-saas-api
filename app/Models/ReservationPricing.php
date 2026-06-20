@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ReservationPricing extends Model
 {
@@ -16,3 +17,4 @@ class ReservationPricing extends Model
         return $this->belongsTo(Reservation::class);
     }
 }
+

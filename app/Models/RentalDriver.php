@@ -25,3 +25,4 @@ class RentalDriver extends Model
         return $this->belongsTo(Driver::class);
     }
 }
+

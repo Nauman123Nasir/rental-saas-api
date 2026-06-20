@@ -24,3 +24,4 @@ class Permission extends Model
         return $this->belongsToMany(Role::class, 'role_permissions');
     }
 }
+

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ReservationDriver extends Model
 {
@@ -24,3 +25,4 @@ class ReservationDriver extends Model
         return $this->belongsTo(Customer::class, 'driver_id');
     }
 }
+

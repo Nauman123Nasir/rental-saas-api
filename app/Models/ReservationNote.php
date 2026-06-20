@@ -21,3 +21,4 @@ class ReservationNote extends Model
         return $this->belongsTo(User::class);
     }
 }
+

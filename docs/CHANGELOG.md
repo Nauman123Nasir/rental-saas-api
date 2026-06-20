@@ -15,6 +15,10 @@ A chronological log of all features, fixes, and improvements built in the backen
 - `ReservationController@index` — added `with(['customer'])` to eager load relations
 - Resolves frontend display bug where customer/asset names showed as blank
 
+### ✅ Reservation Controller Fix
+- Fixed a SQL exception in `ReservationController@store` caused by checking/writing non-existent `start_time_utc`, `end_time_utc`, and `notes` columns on the `AssetBlock` model.
+- Updated queries and creations to use the correct schema column names: `start_datetime`, `end_datetime`, and `reason` (as defined in the `asset_blocks` migration).
+
 ### ✅ Documentation
 - Created `README.md` with full setup guide, credentials, and API reference
 - Created `CHANGELOG.md` and `IMPLEMENTATION.md` in `docs/`
