@@ -208,3 +208,12 @@ D:\xampp\php\php.exe artisan serve --host=127.0.0.1 --port=8000
 | Database | `rental_saas` |
 | Username | `root`        |
 | Password | _(empty)_     |
+
+---
+
+## 📄 Software Requirements Specification (SRS)
+
+All original project requirements, roadmap, volumes, and MVP planning documents are stored in the project repository under:
+- [`docs/SRS_Chatgpt/`](file:///D:/rental-saas-api/docs/SRS_Chatgpt)
+
+These include functional specs (`All-volumes-complete-story.docx`), roadmap documents, feature volume breakdowns (`Vol1.docx` - `vol14-RoadMap.docx`), and seeded login credentials (`credentials.txt`).

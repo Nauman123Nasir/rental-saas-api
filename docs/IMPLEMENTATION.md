@@ -280,3 +280,17 @@ Customer pays ──► PaymentController@store
 | API versioning | All routes under `/api/v1` — future versions would add `/api/v2` |
 | Rate limiting | No API rate limiting implemented yet |
 | Refresh tokens | JWT refresh endpoint exists but frontend doesn't auto-refresh on expiry |
+
+---
+
+## 📄 Software Requirements Specification (SRS)
+
+All original project requirements, roadmap, volumes, and MVP planning documents are stored in the project repository under:
+- [`docs/SRS_Chatgpt/`](file:///D:/rental-saas-api/docs/SRS_Chatgpt)
+
+These include:
+- **`All-volumes-complete-story.docx`**: Complete functional specifications and user story backlog.
+- **`Our MVP_Plan.docx`**: Core MVP requirements & pricing details.
+- **`MVP-ROADMAP.docx`**: Iteration/phase roadmap.
+- **`Vol1.docx` through `vol14-RoadMap.docx`**: Detailed feature volumes (categories, fleet, rentals, booking, invoicing, etc.).
+- **`credentials.txt`**: Seeded login credentials.
