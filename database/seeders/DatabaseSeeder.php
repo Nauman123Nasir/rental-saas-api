@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
 
             // ── Business Reference Data ───────────────────────────────────
             SubscriptionPlanSeeder::class,
+
+            // ── Tenant & Identity Layer ───────────────────────────────────
+            TenantIdentitySeeder::class,
         ]);
     }
 }

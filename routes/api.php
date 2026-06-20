@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 
 // ── Public Auth Routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/login',   [AuthController::class, 'login']);
+    Route::post('/login',           [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password',  [AuthController::class, 'resetPassword']);
 });
 
 // ── Protected Routes (require valid JWT) ─────────────────────────────────────
