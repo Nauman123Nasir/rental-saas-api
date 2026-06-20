@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Auth\Controllers\AuthController;
+use App\Modules\Customers\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,8 +35,20 @@ Route::middleware('auth:api')->group(function () {
     // (Placeholder – controllers to be added in Phase 1)
     // Route::apiResource('branches', BranchController::class);
 
-    // ── Phase 2: Customers ────────────────────────────────────────────────────
-    // Route::apiResource('customers', CustomerController::class);
+    // ── Phase 3: Customers ────────────────────────────────────────────────────
+    Route::middleware('check.permission:customers.view')->group(function () {
+        Route::get('/customers', [CustomerController::class, 'index']);
+        Route::get('/customers/{id}', [CustomerController::class, 'show']);
+    });
+    Route::middleware('check.permission:customers.create')->group(function () {
+        Route::post('/customers', [CustomerController::class, 'store']);
+    });
+    Route::middleware('check.permission:customers.update')->group(function () {
+        Route::put('/customers/{id}', [CustomerController::class, 'update']);
+    });
+    Route::middleware('check.permission:customers.delete')->group(function () {
+        Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+    });
 
     // ── Phase 3: Assets / Fleet ───────────────────────────────────────────────
     // Route::apiResource('assets', AssetController::class);
