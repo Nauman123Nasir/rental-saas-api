@@ -54,7 +54,7 @@ class TenantIdentitySeeder extends Seeder
         ]);
 
         // 5. Seed Permissions (Global)
-        $modules = ['customers', 'assets', 'reservations', 'rentals', 'finance', 'users'];
+        $modules = ['customers', 'assets', 'reservations', 'rentals', 'finance', 'users', 'roles'];
         $actions = ['*', 'view', 'create', 'update', 'delete'];
 
         $permissionIds = [];

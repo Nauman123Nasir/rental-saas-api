@@ -99,6 +99,33 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/rentals/{id}/checkin', [App\Http\Controllers\Api\V1\RentalController::class, 'checkin']);
     });
 
+    // ── Users & Roles Management ──────────────────────────────────────────────
+    Route::middleware('check.permission:users.view')->group(function () {
+        Route::get('/users',        [App\Modules\Users\Controllers\UserController::class, 'index']);
+        Route::get('/users/{id}',   [App\Modules\Users\Controllers\UserController::class, 'show']);
+        Route::get('/roles',        [App\Modules\Users\Controllers\RoleController::class, 'index']);
+        Route::get('/roles/{id}',   [App\Modules\Users\Controllers\RoleController::class, 'show']);
+        Route::get('/permissions',  [App\Modules\Users\Controllers\PermissionController::class, 'index']);
+    });
+    Route::middleware('check.permission:users.create')->group(function () {
+        Route::post('/users',       [App\Modules\Users\Controllers\UserController::class, 'store']);
+    });
+    Route::middleware('check.permission:users.update')->group(function () {
+        Route::put('/users/{id}',   [App\Modules\Users\Controllers\UserController::class, 'update']);
+    });
+    Route::middleware('check.permission:users.delete')->group(function () {
+        Route::delete('/users/{id}', [App\Modules\Users\Controllers\UserController::class, 'destroy']);
+    });
+    Route::middleware('check.permission:roles.create')->group(function () {
+        Route::post('/roles',       [App\Modules\Users\Controllers\RoleController::class, 'store']);
+    });
+    Route::middleware('check.permission:roles.update')->group(function () {
+        Route::put('/roles/{id}',   [App\Modules\Users\Controllers\RoleController::class, 'update']);
+    });
+    Route::middleware('check.permission:roles.delete')->group(function () {
+        Route::delete('/roles/{id}', [App\Modules\Users\Controllers\RoleController::class, 'destroy']);
+    });
+
     // ── Phase 7: Finance (Invoices & Payments) ─────────────────────────────────
     Route::prefix('finance')->group(function () {
 
