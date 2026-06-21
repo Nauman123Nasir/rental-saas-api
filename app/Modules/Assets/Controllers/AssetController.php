@@ -46,7 +46,7 @@ class AssetController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'nullable|exists:asset_categories,id',
-            'asset_code' => 'required|string|max:255',
+            'asset_code' => 'nullable|string|max:255',
             'name' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
@@ -69,6 +69,15 @@ class AssetController extends Controller
             'maintenance_blocks.*.reason' => 'nullable|string',
             'maintenance_blocks.*.cost' => 'required_with:maintenance_blocks|numeric',
         ]);
+
+        // Auto-generate asset_code if not provided
+        if (empty($validated['asset_code'])) {
+            $tenantId = auth()->user()->tenant_id;
+            do {
+                $count = Asset::where('tenant_id', $tenantId)->withTrashed()->count() + 1;
+                $validated['asset_code'] = 'AST-' . str_pad($count, 5, '0', STR_PAD_LEFT);
+            } while (Asset::where('tenant_id', $tenantId)->where('asset_code', $validated['asset_code'])->exists());
+        }
 
         DB::beginTransaction();
 

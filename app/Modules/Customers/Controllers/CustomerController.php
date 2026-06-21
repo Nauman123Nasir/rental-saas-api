@@ -72,7 +72,7 @@ class CustomerController extends Controller
 
         $validated = $request->validate([
             'customer_code'               => [
-                'required',
+                'nullable',
                 'string',
                 Rule::unique('customers')->where('tenant_id', $tenantId)->whereNull('deleted_at'),
             ],
@@ -100,9 +100,17 @@ class CustomerController extends Controller
             'documents.*.file_path'       => ['nullable', 'string', 'max:500'],
         ]);
 
-        $customer = DB::transaction(function () use ($validated) {
+        $customer = DB::transaction(function () use ($validated, $tenantId) {
             $customerData = collect($validated)->except(['drivers', 'documents'])->toArray();
-            
+
+            // Auto-generate customer_code if not provided
+            if (empty($customerData['customer_code'])) {
+                do {
+                    $count = Customer::where('tenant_id', $tenantId)->withTrashed()->count() + 1;
+                    $customerData['customer_code'] = 'CUST-' . str_pad($count, 5, '0', STR_PAD_LEFT);
+                } while (Customer::where('tenant_id', $tenantId)->where('customer_code', $customerData['customer_code'])->exists());
+            }
+
             // Create customer (tenant_id auto assigned by Trait)
             $customer = Customer::create($customerData);
 
