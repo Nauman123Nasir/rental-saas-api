@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
+use App\Models\Asset;
 use App\Models\AssetBlock;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,8 @@ class ReservationController extends Controller
                     'reason' => 'Blocked for Reservation: ' . $reservation->reservation_no,
                     'tenant_id' => $reservation->tenant_id,
                 ]);
+
+                Asset::where('id', $assetId)->update(['status' => 'Reserved']);
             }
 
             DB::commit();

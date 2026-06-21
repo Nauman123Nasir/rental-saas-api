@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Rental;
 use App\Models\Reservation;
+use App\Models\Asset;
+use App\Models\Invoice;
 use App\Models\RentalPickupInspection;
 use App\Models\RentalReturnInspection;
 use Carbon\Carbon;
@@ -54,6 +56,7 @@ class RentalController extends Controller
             ]);
 
             $reservation->update(['status' => 'Converted']);
+            $asset->update(['status' => 'Rented']);
 
             DB::commit();
             return response()->json($rental->load(['customer', 'asset', 'pickupInspection']), 201);
@@ -73,7 +76,7 @@ class RentalController extends Controller
 
         DB::beginTransaction();
         try {
-            $rental = Rental::findOrFail($id);
+            $rental = Rental::with(['charges', 'reservation'])->findOrFail($id);
 
             RentalReturnInspection::create([
                 'rental_id' => $rental->id,
@@ -89,8 +92,62 @@ class RentalController extends Controller
                 'status' => 'Returned',
             ]);
 
+            Asset::where('id', $rental->asset_id)->update(['status' => 'Available']);
+
+            // Auto-generate invoice on check-in if one doesn't already exist
+            if (!$rental->invoice()->exists()) {
+                $lines = [];
+
+                $baseAmount = $rental->reservation?->total_amount ?? 0;
+                if ($baseAmount > 0) {
+                    $lines[] = [
+                        'description' => 'Base Rental Charge',
+                        'line_type'   => 'rental_base',
+                        'unit_price'  => $baseAmount,
+                        'quantity'    => 1,
+                        'total'       => $baseAmount,
+                    ];
+                }
+
+                foreach ($rental->charges as $charge) {
+                    $lines[] = [
+                        'description' => $charge->description ?? ucfirst(str_replace('_', ' ', $charge->charge_type)),
+                        'line_type'   => $charge->charge_type,
+                        'unit_price'  => $charge->amount,
+                        'quantity'    => 1,
+                        'total'       => $charge->amount,
+                    ];
+                }
+
+                $subtotal = collect($lines)->sum('total');
+
+                $invoiceNo = 'INV-' . strtoupper(str_pad($rental->tenant_id, 3, '0', STR_PAD_LEFT))
+                    . '-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+
+                $invoice = Invoice::create([
+                    'tenant_id'       => $rental->tenant_id,
+                    'rental_id'       => $rental->id,
+                    'customer_id'     => $rental->customer_id,
+                    'invoice_no'      => $invoiceNo,
+                    'status'          => 'Issued',
+                    'subtotal'        => $subtotal,
+                    'discount_amount' => 0,
+                    'tax_amount'      => 0,
+                    'total_amount'    => $subtotal,
+                    'amount_paid'     => 0,
+                    'balance_due'     => $subtotal,
+                    'currency_code'   => 'USD',
+                    'issue_date'      => now()->toDateString(),
+                    'due_date'        => null,
+                ]);
+
+                foreach ($lines as $line) {
+                    $invoice->lines()->create($line);
+                }
+            }
+
             DB::commit();
-            return response()->json($rental->load(['returnInspection']));
+            return response()->json($rental->load(['returnInspection', 'invoice.lines']));
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);

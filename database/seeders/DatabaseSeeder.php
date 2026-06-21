@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
 
             // ── Tenant & Identity Layer ───────────────────────────────────
             TenantIdentitySeeder::class,
+
+            // ── Tenant Reference Data (must run after tenants exist) ───────
+            AssetCategorySeeder::class,
         ]);
     }
 }
