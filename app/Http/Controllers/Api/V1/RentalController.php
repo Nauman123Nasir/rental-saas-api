@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Rental;
 use App\Models\Reservation;
 use App\Models\Asset;
+use App\Models\AssetBlock;
 use App\Models\Invoice;
 use App\Models\RentalPickupInspection;
 use App\Models\RentalReturnInspection;
@@ -94,14 +95,70 @@ class RentalController extends Controller
 
             Asset::where('id', $rental->asset_id)->update(['status' => 'Available']);
 
-            // Auto-generate invoice on check-in if one doesn't already exist
-            if (!$rental->invoice()->exists()) {
+            // Remove the asset block so the asset can be re-booked immediately.
+            // Match by reference_id (blocks created after the fix) or by exact
+            // date range (blocks created before reference_id was stored).
+            AssetBlock::where('asset_id', $rental->asset_id)
+                ->where('block_type', 'Reservation')
+                ->where(function ($q) use ($rental) {
+                    $q->where('reference_id', $rental->reservation_id);
+                    if ($rental->reservation) {
+                        $q->orWhere(function ($inner) use ($rental) {
+                            $inner->where('start_datetime', $rental->reservation->pickup_datetime_utc)
+                                  ->where('end_datetime',   $rental->reservation->return_datetime_utc);
+                        });
+                    }
+                })
+                ->delete();
+
+            // Auto-generate invoice on check-in.
+            // If an invoice already exists but has $0 (created before the rate-
+            // calculation fix), delete it and regenerate with the correct amount.
+            $existingInvoice = $rental->invoice()->first();
+            $shouldGenerate  = !$existingInvoice || (float) $existingInvoice->total_amount === 0.0;
+
+            if ($shouldGenerate) {
+                if ($existingInvoice) {
+                    $existingInvoice->lines()->delete();
+                    $existingInvoice->delete();
+                }
+
                 $lines = [];
 
-                $baseAmount = $rental->reservation?->total_amount ?? 0;
+                // Derive charge from asset rate × actual rental duration.
+                // reservation.total_amount is never populated during booking.
+                $baseAmount  = 0;
+                $description = 'Base Rental Charge';
+
+                // Use withoutGlobalScopes to avoid any tenant-scope mismatch
+                $asset = Asset::withoutGlobalScopes()->find($rental->asset_id);
+                if ($asset) {
+                    $pickup     = $rental->pickup_datetime_utc ?? Carbon::now();
+                    $returnedAt = $rental->actual_return_datetime_utc ?? Carbon::now();
+                    $minutes    = max(1, (int) $pickup->diffInMinutes($returnedAt));
+
+                    if ((float) $asset->daily_rate > 0) {
+                        $days        = max(1, (int) ceil($minutes / 1440));
+                        $baseAmount  = round((float) $asset->daily_rate * $days, 2);
+                        $description = "Base Rental Charge ({$days} day" . ($days > 1 ? 's' : '') . " @ {$asset->daily_rate}/day)";
+                    } elseif ((float) $asset->hourly_rate > 0) {
+                        $hours       = max(1, (int) ceil($minutes / 60));
+                        $baseAmount  = round((float) $asset->hourly_rate * $hours, 2);
+                        $description = "Base Rental Charge ({$hours} hr" . ($hours > 1 ? 's' : '') . " @ {$asset->hourly_rate}/hr)";
+                    } elseif ((float) $asset->weekly_rate > 0) {
+                        $weeks       = max(1, (int) ceil($minutes / (1440 * 7)));
+                        $baseAmount  = round((float) $asset->weekly_rate * $weeks, 2);
+                        $description = "Base Rental Charge ({$weeks} wk" . ($weeks > 1 ? 's' : '') . " @ {$asset->weekly_rate}/wk)";
+                    } elseif ((float) $asset->monthly_rate > 0) {
+                        $months      = max(1, (int) ceil($minutes / (1440 * 30)));
+                        $baseAmount  = round((float) $asset->monthly_rate * $months, 2);
+                        $description = "Base Rental Charge ({$months} mo" . ($months > 1 ? 's' : '') . " @ {$asset->monthly_rate}/mo)";
+                    }
+                }
+
                 if ($baseAmount > 0) {
                     $lines[] = [
-                        'description' => 'Base Rental Charge',
+                        'description' => $description,
                         'line_type'   => 'rental_base',
                         'unit_price'  => $baseAmount,
                         'quantity'    => 1,

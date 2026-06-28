@@ -31,7 +31,7 @@ class ReservationController extends Controller
         $pickup = Carbon::parse($request->pickup_datetime_utc);
         $return = Carbon::parse($request->return_datetime_utc);
 
-        // Check availability
+        // Check availability — ignore stale reservation blocks
         foreach ($request->assets as $assetId) {
             $conflicts = AssetBlock::where('asset_id', $assetId)
                 ->where(function ($query) use ($pickup, $return) {
@@ -41,7 +41,35 @@ class ReservationController extends Controller
                               $q->where('start_datetime', '<=', $pickup)
                                 ->where('end_datetime', '>=', $return);
                           });
-                })->exists();
+                })
+                ->where(function ($q) {
+                    // Non-reservation blocks (manual) always count.
+                    // Reservation blocks count only when NO completed rental exists for them.
+                    $q->where('block_type', '!=', 'Reservation')
+                      ->orWhere(function ($rb) {
+                          $rb->where('block_type', 'Reservation')
+                             ->whereNotExists(function ($sub) {
+                                 // A block is stale when a returned/cancelled rental matches it.
+                                 // New-style blocks: match via reservation_id = reference_id.
+                                 // Legacy blocks (reference_id IS NULL): match via asset_id
+                                 // and expected_return_datetime_utc = block end_datetime.
+                                 $sub->select(DB::raw(1))
+                                     ->from('rentals')
+                                     ->whereIn('rentals.status', ['Returned', 'Cancelled'])
+                                     ->where(function ($match) {
+                                         $match->where(function ($byRef) {
+                                             $byRef->whereNotNull('asset_blocks.reference_id')
+                                                   ->whereColumn('rentals.reservation_id', 'asset_blocks.reference_id');
+                                         })->orWhere(function ($byDate) {
+                                             $byDate->whereNull('asset_blocks.reference_id')
+                                                    ->whereColumn('rentals.asset_id', 'asset_blocks.asset_id')
+                                                    ->whereColumn('rentals.expected_return_datetime_utc', 'asset_blocks.end_datetime');
+                                         });
+                                     });
+                             });
+                      });
+                })
+                ->exists();
 
             if ($conflicts) {
                 return response()->json(['message' => 'Asset ' . $assetId . ' is not available for the selected dates.'], 422);
@@ -63,12 +91,14 @@ class ReservationController extends Controller
                 $reservation->assets()->create(['asset_id' => $assetId]);
 
                 AssetBlock::create([
-                    'asset_id' => $assetId,
-                    'block_type' => 'Reservation',
+                    'asset_id'       => $assetId,
+                    'block_type'     => 'Reservation',
                     'start_datetime' => $pickup,
-                    'end_datetime' => $return,
-                    'reason' => 'Blocked for Reservation: ' . $reservation->reservation_no,
-                    'tenant_id' => $reservation->tenant_id,
+                    'end_datetime'   => $return,
+                    'reason'         => 'Blocked for Reservation: ' . $reservation->reservation_no,
+                    'tenant_id'      => $reservation->tenant_id,
+                    'reference_type' => 'reservation',
+                    'reference_id'   => $reservation->id,
                 ]);
 
                 Asset::where('id', $assetId)->update(['status' => 'Reserved']);
